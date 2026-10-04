@@ -20,6 +20,7 @@ Open `project03.ipynb` in Jupyter and run all cells in order. The notebook is sp
 Input data files are NOT tracked in this repo, they are listed in Project Structure below and placed in local folder before running the notebook.
 
 # Pseudocode for project03.ipynb
+```
 GibbsMotifFinder(seqs, k, seed, ic_window, max_iterations)
     0. SET UP
        seed the random generator
@@ -43,6 +44,7 @@ Note: The notebook's "Important considerations" explicitly list random.randint()
           if IC unchanged over the last ic_window rounds:
               stop early
     3. RETURN the PFM of all Motifs (4 × k)
+```
 ## Dependencies
 - Python 3.14.2
 - numpy
@@ -50,21 +52,20 @@ Note: The notebook's "Important considerations" explicitly list random.randint()
 - [seqlogo] (required for the plotting cells, not for the core algorithm)
   
 ## Project Structure
-\`\`\`
+```
 project03/
 ├── project03.ipynb        # main notebook — implements GibbsMotifFinder
 ├── data_readers.py          # FASTA/GFF file readers (do not modify)
 ├── seq_ops.py                # reverse complement + promoter extraction (do not modify)
 ├── motif_ops.py               # PFM/PWM building, scoring, information content (do not modify)
 └── README.md
-\`\`\`
-
-
-
 ```
 
 
-```
+
+
+
+
 
 # Successes
 
