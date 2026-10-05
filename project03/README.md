@@ -41,6 +41,7 @@ GibbsMotifFinder(seqs, k, seed, ic_window, max_iterations)
           P ← A / sum(A)
           Motif_i ← one candidate, picked at random weighted by P
        e. IC ← information content of all Motifs; record it
+          print IC every 1000 iterations (sanity check)
           if IC unchanged over the last ic_window rounds:
               stop early
     3. RETURN the PFM of all Motifs (4 × k)
