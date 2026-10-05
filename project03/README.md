@@ -6,20 +6,42 @@ Because real genomic datasets are far too large to exhaustively check every poss
 The algorithm starts from a random guess at the motif's location in each sequence, then iteratively refines those guesses: on each iteration, one sequence is set aside, a position weight matrix (PWM) is built from the current guesses in every other sequence, and the set-aside sequence's guess is updated by scoring all possible windows against that PWM and sampling a new position probabilistically (rather than always taking the best-scoring window). Repeating this thousands of times allows the guesses to converge on the sequences' shared motif, without ever exhaustively searching the full solution space.
 
 We test our implementation on two datasets: 
-(1) GCF_000009045.1_ASM904v1_genomic.fna and GCF_000009045.1_ASM904v1_genomic.gff
+1. GCF_000009045.1_ASM904v1_genomic.fna and GCF_000009045.1_ASM904v1_genomic.gff\
 Promoter regions upstream of Bacillus subtilis coding sequences, pre-filtered for a fragment of the Shine-Dalgarno motif
-(2) nrf1_gibbs.fa
+2. nrf1_gibbs.fa\
 NRF1 ChIP-seq peak sequences, to recover the motif associated with NRF1 transcription factor binding.
 
 # Usage
 Open `project03.ipynb` in Jupyter and run all cells in order. The notebook is split into:
 - Core deliverable: **Implement Gibbs Sampler** — the `GibbsMotifFinder()` function
 - Provided Programs, not to be modified:
-**Driver Program** - runs `GibbsMotifFinder` on the *B. subtilis* promoter dataset and plots the resulting sequence logo. 
+**Driver Program** - runs `GibbsMotifFinder` on the *B. subtilis* promoter dataset and plots the resulting sequence logo.\
 **NRF1 Driver Program** — runs `GibbsMotifFinder` on the NRF1 ChIP-seq peaks. Requires completing the data-ingest cell above it.
 Input data files are NOT tracked in this repo, they are listed in Project Structure below and placed in local folder before running the notebook.
 
 # Pseudocode for project03.ipynb
+### Imports
+
+```python
+import random
+import numpy as np
+import bamnostic as bs
+import seqlogo
+
+from data_readers import *
+from seq_ops import get_seq
+from motif_ops import *
+```
+### GibbsMotifFinder
+**Note #1: `random` module instead of rng object:**
+The notebook's "Important considerations" list `random.randint()/numpy.random.randint()` and `random.choices()/ numpy.random.choice()` as equally valid options. We disregard the provided: `rng = np.random.default_rng(seed)` since our implementation uses `random.randint()/random.choices()` throughout, making the rng object unused.
+
+Note #2: parameters instead of hardcoded values:
+- `max_iterations` externalizes the pseudocode's "1 to 10000" cap, allowing
+  shorter test runs (e.g., for debugging on very large datasets, like NRF1) without
+  modifying the function itself.
+- `ic_window` externalizes the convergence check ("or Motifs stops
+  changing"), which the pseudocode leaves undefined numerically. We used a window of 100 iterations; as a parameter rather than hardcoding it, since the right convergence window may differ depending on dataset size and signal strength.
 ```
 GibbsMotifFinder(seqs, k, seed, ic_window, max_iterations)
     0. SET UP
@@ -27,7 +49,6 @@ GibbsMotifFinder(seqs, k, seed, ic_window, max_iterations)
        stop with an error if ic_window or max_iterations < 1
        uppercase all seqs; drop any shorter than k
        N ← number of seqs
-Note: The notebook's "Important considerations" explicitly list random.randint()/numpy.random.randint() and random.choices()/ numpy.random.choice() as equally valid options. We chose the `random` module for both steps, hence we disregard the provided: rng = np.random.default_rng(seed) since our implementation uses random.randint()/random.choices() throughout, making the rng object unused.
     1. INITIALIZE
        for each seq:
            motif ← random k-letter piece of seq
@@ -49,8 +70,8 @@ Note: The notebook's "Important considerations" explicitly list random.randint()
 - Python 3.14.2
 - numpy
 - [bamnostic]
-- [seqlogo] (required for the plotting cells, not for the core algorithm)
-  
+- [seqlogo] 
+
 ## Project Structure
 ```
 project03/
@@ -61,22 +82,38 @@ project03/
 └── README.md
 ```
 
-
-
-
-
-
-
 # Successes
-
+- Successfully implemented the full Gibbs sampling loop (leave-one-out PWM construction, both-strand scoring, and probabilistic weighted selection) matching the pseudocode's formula.
+- Ran `GibbsMotifFinder` on the real *B. subtilis* promoter dataset (800+ sequences, each 50bp) and had it complete successfully in approximately 1 minute, returning a valid 4×k PFM.
+- Implemented a convergence check using a sliding window of information content (IC) values, exiting early once IC stabilizes across the window rather than always running the full 10,000-iteration ceiling — made the window size (`ic_window`) and iteration cap (`max_iterations`) configurable parameters rather than hardcoded values, for reusability.
+- Diagnosed and resolved a data file naming mismatch between the driver program's hardcoded `.gz` paths and the actual (uncompressed) provided files.
+- Diagnosed a Ghostscript dependency failure in the `seqlogo` plotting step and confirmed (per the assignment's own note) that this is a known, non-blocking issue separate from the core algorithm's correctness.
+  
 # Struggles
-Trang's note: algo works I think, will need to do sth about Ghostscript for visualization, will mention that here. 
+TRang (im just putting my name here bc this was my struggle, please add yours and considalte them with mine, remove the name. Format: issue => what we found out => what was our debug action: 
+- `.gz` path mismatch in driver cell\
+→ `get_fasta()`/`get_gff()` only gzip-open when `.gz` is in the filename string; provided files were uncompressed, causing `FileNotFoundError`.\
+→ Updated the two hardcoded path strings to match actual filenames.
+- Ghostscript missing (`OSError`)\
+→ `seqlogo` depends on `weblogo`, which requires the external Ghostscript program on PATH — not something `pip`/`conda` installs.\
+→ Installed via `brew install ghostscript`, restarted kernel.
+- Duplicate nested `project03/project03/` from a teammate's PR\
+→ Caused by extracting the project zip inside an already-existing folder of the same name.\
+→ Moved real edits to the correct path, deleted the duplicate.
+- NRF1 runtime (90,061 sequences, ~1 sec/iteration)\
+→ `build_pfm()` reprocesses nearly the full sequence list every iteration, so runtime scales directly with dataset size— a full 10,000-iteration run would take roughly 2.8 hours. Measured real per-iteration cost with a short test run(`max_iterations=20`) to get grounded timing instead of guessing; let the full run continue in the background given the Oct 7 deadline.
+- First-time Terminal clone/push\
+→ `git clone` targets the whole repo, not a branch; switching branches is always a separate step.\
+→ Practiced the full clone → branch → pull → edit → commit → push cycle.\
 # Personal Reflections
 ## Group Leader
-
+Trang: Our approach was making sure every teammate understand and write the Gibbs sampler independently and cross-validating results against each other before merging. This allows us to struggle and learn, and I do think the efforts and time spent was worth it because each teammate own implementation works correctly without needing to follow the others, and we can all confidently say that we understand the project to the throughly. Project 3 is my first time being a group leader and owning repo. Navigating and untangling confusing as a repo owner on here was time-consuming to me, but then again, practice makes perfect and I really appreciate the chances to do this more often. 
 ## Other members
 Dianah: Project 3 is my first time being a collaborator instead of a project leader, so I am learning that side of GitHub as I go, trying to figure out forking, 
 how to open a pull request into someone else’s branch instead of my own and what my responsibilities look like when I am not managing the whole repo. 
 I am still getting my footing with it, and I think it’s helping me understand GitHub better.
 
 # Generative AI Appendix
+**Tool used:** Claude (Anthropic), Claude Sonnet 5
+**Prompt:** 
+**Used for:**
