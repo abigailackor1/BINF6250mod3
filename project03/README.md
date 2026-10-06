@@ -108,10 +108,14 @@ Subsampling to 1,000 peaks drops the never-selected probability to **0.005%**, m
 
 
 # Struggles
-TRang (im just putting my name here bc this was my struggle, please add yours and considalte them with mine, remove the name. Format: issue => what we found out => what was our debug action: 
+TRang and DK (im just putting my name here bc this was my struggle, please add yours and considalte them with mine, remove the name. Format: issue => what we found out => what was our debug action: 
 - `.gz` path mismatch in driver cell\
 → `get_fasta()`/`get_gff()` only gzip-open when `.gz` is in the filename string; provided files were uncompressed, causing `FileNotFoundError`.\
 → Updated the two hardcoded path strings to match actual filenames.
+- `bamniostic`, and `seqlogo` were not installed, so initial imports cell failed.
+→  Installed and moved on with the code 
+- Import cells used `import seqlogo as sl` but the program called `seqlogo.seqlogo` which caused the driver to fail initially.
+→  Removed  sl to match untouched driver function
 - Ghostscript missing (`OSError`)\
 → `seqlogo` depends on `weblogo`, which requires the external Ghostscript program on PATH — not something `pip`/`conda` installs.\
 → Installed via `brew install ghostscript`, restarted kernel.
@@ -133,9 +137,8 @@ TRang (im just putting my name here bc this was my struggle, please add yours an
 Trang: Our approach was making sure every teammate understand and write the Gibbs sampler independently and cross-validating results against each other before merging. This allows us to struggle and learn, and I do think the efforts and time spent was worth it because each teammate own implementation works correctly without needing to follow the others, we can confidently say that we understand the project. I liked that my teammate approach regarding the nrf1 data set was different than mine. Mine was keeping the driver program exactly as is, and it took me almost 3 hours running and the result was drastically different from promoter data set. Then I saw their alternative design of subsampling. This allowed me to dig further and learnt a lot more, documented in the notebook and this readme. 
 Project 3 is my first time being a group leader and owning repo. Navigating and untangling confusing as a repo owner on here was time-consuming to me, but then again, practice makes perfect and I really appreciate the chances to do this more often. 
 ## Other members
-Dianah: Project 3 is my first time being a collaborator instead of a project leader, so I am learning that side of GitHub as I go, trying to figure out forking, 
-how to open a pull request into someone else’s branch instead of my own and what my responsibilities look like when I am not managing the whole repo. 
-I am still getting my footing with it, and I think it’s helping me understand GitHub better.
+Dianah: Project 3 was my first time being a collaborator instead of a project leader, so I was able to learn that side of GitHub, figured out forking, how to open a pull request into someone else’s branch instead of my own and what my responsibilities look like when I am not managing the whole repo. 
+I am still getting my footing with it, and I think it’s helping me understand GitHub better. Running the NRF1 file with 90,061 sequences compared to the 837 promoters would have taken hours making it easier to sample 1,000 peaks.
 
 # Generative AI Appendix
 **Tool used:** Claude (Anthropic), Claude Sonnet 5
