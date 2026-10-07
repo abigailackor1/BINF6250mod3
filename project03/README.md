@@ -9,10 +9,10 @@ We test our implementation on two datasets:
 
 # Usage
 Open `project03.ipynb` in Jupyter and run all cells in order. The notebook is split into:
-- Core deliverable: **Implement Gibbs Sampler** — the `GibbsMotifFinder()` function
+- Core deliverable: **Implement Gibbs Sampler** - the `GibbsMotifFinder()` function
 - Provided Programs, not to be modified:
 **Driver Program** - runs `GibbsMotifFinder` on the *B. subtilis* promoter dataset and plots the resulting sequence logo.\
-**NRF1 Driver Program** — runs `GibbsMotifFinder` on the NRF1 ChIP-seq peaks. Requires completing the data-ingest cell above it.
+**NRF1 Driver Program** — runs `GibbsMotifFinder` on the NRF1 ChIP-seq peaks. Requires completing the data-ingest cell above it.\
 Input data files are NOT tracked in this repo, they are listed in Project Structure below and placed in local folder before running the notebook.
 
 # Pseudocode for project03.ipynb
@@ -42,8 +42,8 @@ GibbsMotifFinder(seqs, k, seed, ic_window, max_iterations)
               stop early
     3. RETURN the PFM of all Motifs (4 × k)
 ```
-Note #1: `random` module instead of `rng` object:**
-The notebook's "Important considerations" list `random.randint()/numpy.random.randint()` and `random.choices()/ numpy.random.choice()` as equally valid options. We disregard the provided: `rng = np.random.default_rng(seed)` since our implementation uses `random.randint()/random.choices()` throughout, making the rng object unused.
+Note #1: `random` module instead of `rng` object:\
+The notebook's "Important considerations" list `random.randint()/numpy.random.randint()` and `random.choices()/ numpy.random.choice()` as equally valid options. We disregard the provided: `rng = np.random.default_rng(seed)` since our implementation uses `random.randint()/random.choices()` throughout, making the `rng` object unused.
 
 Note #2: parameters instead of hardcoded values:
 - `max_iterations` externalizes the pseudocode's "1 to 10000" cap, allowing shorter test runs (e.g., for debugging on very large datasets, like NRF1) without modifying the function itself.
@@ -101,21 +101,21 @@ Cross-validated our implementation against teammate independently written versio
 `GibbsMotifFinder` converged to a total information content of 12.12 bits out of a theoretical maximum of 20 bits for a 10-position motif — roughly 60% of maximum, indicating that conservation is concentrated in a subset of positions rather than spread evenly across the full window. Per-position analysis confirms this directly: positions 4–9 show 98–99% consensus on a single base, spelling AGGAGG, while positions 1–3 and 10 remain weak and near-random (41–54%). This matches expectation, since the driver program pre-filtered promoters to only include sequences already containing this exact string (a fragment of the Shine-Dalgarno motif) — meaning this result primarily validates that the algorithm correctly recovers a known, real signal from random initialization, distinguishing it clearly from uninformative flanking sequence, rather than demonstrating discovery of a previously unknown motif.
 - NRF1 ChIP-seq peak sequences:
 1. Full Dataset (N = 90,061, default max_iterations = 10,000)
-This run produced a PFM with a total information content of only **0.15 bits** — every position is 29% at best — and took **2h 44m** to complete. 
+This run produced a PFM with a total information content of only **0.15 bits** — every position is 29% at best — and took **2h 44m** to complete.\
 Why? For leave-one-out design: the probability any sequence is never selected is `(1 - 1/N)^max_iterations`, which for N=90,061 and max_iterations=10,000 is **≈89.5%**. The vast majority of sequences never had their motif guess refined beyond random initialization, so the final PFM is dominated by noise.
 2. Alternative Design: Subsampled Dataset (N = 1,000, same max_iterations = 10,000)
-Subsampling to 1,000 peaks drops the never-selected probability to **0.005%**, matching the iteration budget to what the algorithm needs to converge. This run completed in ~2 minutes with a total information content of **3.20 bits** — IC was still rising at the final iteration (2.71 → 3.20) rather than plateauing, suggesting more iterations could sharpen the result further. Per-position consensus is moderate (35–69%), notably weaker than the promoter dataset's 98–99% — expected, since NRF1 ChIP-seq peaks aren't pre-filtered for one exact motif the way the promoter dataset was.
+Subsampling to 1,000 peaks drops the never-selected probability to **0.005%**, matching the iteration budget to what the algorithm needs to converge. This run completed in ~2 minutes with a total information content of **3.20 bits** - IC was still rising at the final iteration (2.71 → 3.20) rather than plateauing, suggesting more iterations could sharpen the result further. Per-position consensus is moderate (35–69%), notably weaker than the promoter dataset's 98–99% - expected, since NRF1 ChIP-seq peaks aren't pre-filtered for one exact motif the way the promoter dataset was.
 
 
 # Struggles
-TRang and DK (im just putting my name here bc this was my struggle, please add yours and considalte them with mine, remove the name. Format: issue => what we found out => what was our debug action: 
+Issue => what we found out => what was our debug action: 
 - `.gz` path mismatch in driver cell\
 → `get_fasta()`/`get_gff()` only gzip-open when `.gz` is in the filename string; provided files were uncompressed, causing `FileNotFoundError`.\
 → Updated the two hardcoded path strings to match actual filenames.
-- `bamniostic`, and `seqlogo` were not installed, so initial imports cell failed.
-→  Installed and moved on with the code 
-- Import cells used `import seqlogo as sl` but the program called `seqlogo.seqlogo` which caused the driver to fail initially.
-→  Removed  sl to match untouched driver function
+- `bamniostic`, and `seqlogo` were not installed, so initial imports cell failed.\
+→  Installed and moved on with the code.
+- Import cells used `import seqlogo as sl` but the program called `seqlogo.seqlogo` which caused the driver to fail initially.\
+→  Removed  sl to match untouched driver function.
 - Ghostscript missing (`OSError`)\
 → `seqlogo` depends on `weblogo`, which requires the external Ghostscript program on PATH — not something `pip`/`conda` installs.\
 → Installed via `brew install ghostscript`, restarted kernel.
@@ -123,11 +123,11 @@ TRang and DK (im just putting my name here bc this was my struggle, please add y
 → Caused by extracting the project zip inside an already-existing folder of the same name.\
 → Moved real edits to the correct path, deleted the duplicate.
 - NRF1 runtime (90,061 sequences, ~1 sec/iteration)\
-→ `build_pfm()` reprocesses nearly the full sequence list every iteration, so runtime scales directly with dataset size — a full 10,000-iteration run took ~2h 44m
-→ measured real per-iteration cost with a short test run first, then let the full run continue in the background; subsequently adopted subsampling (see Results Interpretation) as alternative for meaningful IC result.
-- Merge conflict resolved incorrectly ("accept both"), breaking notebook JSON
-→ resolving a conflict by accepting both sides left raw conflict markers embedded in the `.ipynb` file, breaking its JSON structure (GitHub showed "Invalid Notebook")
-→ reverted the broken merge commit to restore the last valid state, then manually re-applied the specific changes wanted from each version.
+→ `build_pfm()` reprocesses nearly the full sequence list every iteration, so runtime scales directly with dataset size — A full 10,000-iteration run took ~2h 44m\
+→ Measured real per-iteration cost with a short test run first, then let the full run continue in the background; subsequently adopted subsampling (see Results Interpretation) as alternative for meaningful IC result.
+- Merge conflict resolved incorrectly ("accept both"), breaking notebook JSON\
+→ Resolving a conflict by accepting both sides left raw conflict markers embedded in the `.ipynb` file, breaking its JSON structure (GitHub showed "Invalid Notebook")\
+→ Reverted the broken merge commit to restore the last valid state, then manually re-applied the specific changes wanted from each version.
 - First-time Terminal clone/push\
 → `git clone` targets the whole repo, not a branch; switching branches is always a separate step.\
 → Practiced the full clone → branch → pull → edit → commit → push cycle.\
